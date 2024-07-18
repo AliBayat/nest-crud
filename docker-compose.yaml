@@ -1,0 +1,55 @@
+version: '3.8'
+services:
+  app:
+    container_name: nest_backend
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_NAME: nest_crud
+      DATABASE_USER: root
+      DATABASE_PASS: toor
+      DATABASE_URI: mongodb://root:toor@database:27017/nest_crud?authSource=admin
+      RABBITMQ_URI: amqp://guest:guest@rabbitmq:5672/
+    ports:
+      - '4000:4000'
+    depends_on:
+      - database
+      - rabbitmq
+    networks:
+      - backend-net
+
+  database:
+    image: mongo:6.0
+    container_name: nest_mongodb
+    restart: always
+    ports:
+      - '27037:27017'
+    volumes:
+      - backend-mongodb-storage:/data/db:consistent
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: toor
+    networks:
+      - backend-net
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: nest_rabbitmq
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    restart: always
+    networks:
+      - backend-net
+
+networks:
+  backend-net:
+    driver: bridge
+
+volumes:
+  backend-mongodb-storage:
+    external: false
